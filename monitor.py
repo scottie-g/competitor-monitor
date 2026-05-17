@@ -17,6 +17,7 @@ CD_API_KEY = os.environ["CD_API_KEY"]
 ANTHROPIC_API_KEY = os.environ["ANTHROPIC_API_KEY"]
 SHEET_ID = os.environ["SHEET_ID"]
 LOOKBACK_HOURS = int(os.getenv("LOOKBACK_HOURS", "25"))
+SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL")
 
 
 def cd_get(path: str):
@@ -94,6 +95,14 @@ def append_row(date_str: str, competitor: str, url: str, summary: str, diff_link
     sh.get_worksheet(0).append_row([date_str, competitor, url, summary, diff_link])
 
 
+def notify_slack(competitor: str, summary: str, diff_link: str) -> None:
+    if not SLACK_WEBHOOK_URL:
+        return
+    requests.post(SLACK_WEBHOOK_URL, json={
+        "text": f"*{competitor}* page changed\n{summary}\n<{diff_link}|View diff>"
+    }, timeout=10)
+
+
 def main() -> None:
     print(f"Checking for changes in the last {LOOKBACK_HOURS}h...")
     changes = recent_changes()
@@ -115,6 +124,7 @@ def main() -> None:
         before, after = fetch_snapshots(uuid)
         summary = summarize(title, url, before, after)
         append_row(date_str, competitor, url, summary, diff_link)
+        notify_slack(competitor, summary, diff_link)
         print(f"    {summary[:100]}...")
 
     print("Done.")

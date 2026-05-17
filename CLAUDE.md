@@ -50,6 +50,7 @@ All config lives in `.env`. Required variables raise `KeyError` on startup if mi
 | `SHEET_ID` | Yes | — | Google Sheet ID from the URL |
 | `CD_BASE_URL` | No | `https://app.changedetection.io` | changedetection.io instance root (include the instance path for cloud) |
 | `LOOKBACK_HOURS` | No | `25` | How far back to look for changes (survives a missed daily run) |
+| `SLACK_WEBHOOK_URL` | No | — | Slack Incoming Webhook URL; omit to disable notifications |
 
 ## Scheduling
 

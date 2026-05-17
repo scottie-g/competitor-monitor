@@ -64,6 +64,17 @@ print(summary)
 "
 ```
 
+## Slack notifications (optional)
+
+Set `SLACK_WEBHOOK_URL` in your `.env` to receive a Slack message for each change detected. Works on Slack's free tier.
+
+To get a webhook URL:
+1. Go to [api.slack.com/apps](https://api.slack.com/apps) → Create New App → From scratch
+2. Under **Add features and functionality**, choose **Incoming Webhooks** → toggle on → **Add New Webhook to Workspace**
+3. Pick a channel → copy the webhook URL → paste it into `.env`
+
+Each notification includes the competitor name, the AI summary, and a link to the diff.
+
 ## Scheduling (Windows)
 
 Register as a daily Task Scheduler task so it runs automatically at 8 AM:
