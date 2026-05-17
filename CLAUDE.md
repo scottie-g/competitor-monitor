@@ -2,6 +2,13 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Setup
+
+```powershell
+pip install -r requirements.txt
+cp .env.example .env   # then fill in values
+```
+
 ## Running the script
 
 ```powershell
@@ -34,15 +41,15 @@ Single-file pipeline (`monitor.py`) with three stages that run sequentially:
 
 ## Configuration
 
-All config lives in `.env`:
+All config lives in `.env`. Required variables raise `KeyError` on startup if missing; optional ones have defaults.
 
-| Variable | Purpose |
-|---|---|
-| `CD_BASE_URL` | changedetection.io instance root (include the instance path for cloud) |
-| `CD_API_KEY` | changedetection.io API key (Settings → API in the web UI) |
-| `ANTHROPIC_API_KEY` | Anthropic API key for Claude summarization |
-| `SHEET_ID` | Google Sheet ID from the URL |
-| `LOOKBACK_HOURS` | How far back to look for changes (default 25 to survive missed 8 AM runs) |
+| Variable | Required | Default | Purpose |
+|---|---|---|---|
+| `CD_API_KEY` | Yes | — | changedetection.io API key (Settings → API in the web UI) |
+| `ANTHROPIC_API_KEY` | Yes | — | Anthropic API key for Claude summarization |
+| `SHEET_ID` | Yes | — | Google Sheet ID from the URL |
+| `CD_BASE_URL` | No | `https://app.changedetection.io` | changedetection.io instance root (include the instance path for cloud) |
+| `LOOKBACK_HOURS` | No | `25` | How far back to look for changes (survives a missed daily run) |
 
 ## Scheduling
 
