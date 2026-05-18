@@ -15,7 +15,7 @@ import yaml
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=True)
 
 ANTHROPIC_API_KEY = os.environ["ANTHROPIC_API_KEY"]
 SHEET_ID = os.environ["SHEET_ID"]
@@ -93,7 +93,7 @@ def fetch_page(url: str, js: bool) -> str | None:
             with sync_playwright() as p:
                 browser = p.chromium.launch(headless=True)
                 page = browser.new_page()
-                page.goto(url, wait_until="networkidle", timeout=30_000)
+                page.goto(url, wait_until="domcontentloaded", timeout=30_000)
                 text = page.inner_text("body")
                 browser.close()
         else:
@@ -162,7 +162,7 @@ def main() -> None:
         name = watch.get("name") or urlparse(url).netloc.removeprefix("www.")
         js = watch.get("js", False)
 
-        print(f"  → {name}")
+        print(f"  -> {name}")
         content = fetch_page(url, js)
         if content is None:
             print("    SKIP — fetch failed")
