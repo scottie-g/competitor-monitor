@@ -1,0 +1,16 @@
+watches:
+  # name: display name shown in Google Sheets and Slack
+  # js: true  = use a real browser (needed for React/Vue pages)
+  # js: false = fast plain HTTP fetch (good for static HTML pages)
+
+  - url: https://prismatic-puffpuff-fe544d.netlify.app/
+    name: Prismatic Puffpuff
+    js: true
+
+  - url: https://www.datadoghq.com/pricing/
+    name: Datadog Pricing
+    js: true
+
+  - url: https://nexthink.com/blog
+    name: Nexthink Blog
+    js: true

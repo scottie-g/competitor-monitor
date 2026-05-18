@@ -6,7 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```powershell
 pip install -r requirements.txt
-cp .env.example .env   # then fill in values
+playwright install chromium   # one-time: downloads the browser binary
+cp .env.example .env          # then fill in values
 ```
 
 ## Running the script
@@ -31,25 +32,41 @@ print(summary)
 
 ## Architecture
 
-Single-file pipeline (`monitor.py`) with three stages that run sequentially:
+Single-file pipeline (`monitor.py`) with four stages that run sequentially for each watched URL:
 
-1. **Fetch** — `recent_changes()` calls the changedetection.io REST API (`GET /api/v1/watch`) and filters watches whose `last_changed` timestamp falls within `LOOKBACK_HOURS` (default 25). For each hit, `fetch_snapshots()` retrieves the two most recent plaintext snapshots via `GET /api/v1/watch/{uuid}/history/{timestamp}`, capped at 4000 chars each.
+1. **Load** — `load_watches()` reads `watches.yaml` to get the list of URLs to check.
 
-2. **Summarize** — `summarize()` sends the before/after snapshot pair to `claude-sonnet-4-6` with a competitive-intelligence prompt. Returns a 2–4 sentence plain-English summary.
+2. **Fetch** — `fetch_page()` retrieves the page. Pages marked `js: true` use a headless Playwright/Chromium browser (for React/Vue sites); pages marked `js: false` use a plain HTTP request + BeautifulSoup. Output is capped at 4 000 chars of plain text.
 
-3. **Write** — `append_row()` authenticates via `gspread.oauth()` (token cached at `%APPDATA%\gspread\`) and appends one row to the Google Sheet.
+3. **Compare** — The new page text is SHA-256 hashed and compared against the previous snapshot stored in `snapshots.db`. If the hashes match, the page is skipped. If they differ, the new snapshot is saved and processing continues.
+
+4. **Summarize + Write** — `summarize()` sends the before/after pair to `claude-sonnet-4-6` with a competitive-intelligence prompt, returning a 2–4 sentence plain-English summary. `append_row()` writes a row to Google Sheets; `notify_slack()` posts an optional Slack notification.
+
+## Watch list
+
+URLs to monitor are defined in `watches.yaml` — edit this file to add or remove watches (no Python required):
+
+```yaml
+watches:
+  - url: https://competitor.com/pricing
+    name: Competitor Pricing     # shown in Sheets and Slack
+    js: true                     # true = needs real browser (React/Vue)
+
+  - url: https://another.com/features
+    name: Another Features
+    js: false                    # false = fast plain HTTP fetch
+```
+
+Page snapshots are stored in `snapshots.db` (SQLite, auto-created on first run, kept for 30 days). You can open it with [DB Browser for SQLite](https://sqlitebrowser.org/) to inspect history.
 
 ## Configuration
 
-All config lives in `.env`. Required variables raise `KeyError` on startup if missing; optional ones have defaults.
+All secrets live in `.env`. Required variables raise `KeyError` on startup if missing; optional ones have defaults.
 
 | Variable | Required | Default | Purpose |
 |---|---|---|---|
-| `CD_API_KEY` | Yes | — | changedetection.io API key (Settings → API in the web UI) |
 | `ANTHROPIC_API_KEY` | Yes | — | Anthropic API key for Claude summarization |
 | `SHEET_ID` | Yes | — | Google Sheet ID from the URL |
-| `CD_BASE_URL` | No | `https://app.changedetection.io` | changedetection.io instance root (include the instance path for cloud) |
-| `LOOKBACK_HOURS` | No | `25` | How far back to look for changes (survives a missed daily run) |
 | `SLACK_WEBHOOK_URL` | No | — | Slack Incoming Webhook URL; omit to disable notifications |
 
 ## Scheduling
@@ -63,6 +80,8 @@ Start-ScheduledTask -TaskName "CompetitorMonitor"
 # Check last run result
 Get-ScheduledTaskInfo -TaskName "CompetitorMonitor"
 ```
+
+> **Playwright + Task Scheduler note:** `playwright install chromium` must be run under the same Windows user account that the scheduled task runs as. If the task can't find the browser, open Task Scheduler, check which user the task runs as, switch to that account, and re-run the install command.
 
 ## Google auth
 

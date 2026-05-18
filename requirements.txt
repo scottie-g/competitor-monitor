@@ -2,3 +2,6 @@ anthropic>=0.102.0
 gspread>=6.2.1
 requests>=2.34.2
 python-dotenv>=1.2.2
+playwright>=1.44.0
+pyyaml>=6.0.2
+beautifulsoup4>=4.12.0
